@@ -152,6 +152,8 @@ SamsungSmartTvAccessory.prototype._setMute = function(mute, callback) {
          }
      });
   }
+   });
+ }
 };
 
 SamsungSmartTvAccessory.prototype._getOn = function(callback) {
