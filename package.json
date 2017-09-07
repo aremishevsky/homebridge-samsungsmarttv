@@ -1,7 +1,7 @@
 {
-  "name": "homebridge-samsungtv2016",
+  "name": "homebridge-samsungsmarttv",
   "version": "0.0.7",
-  "description": "Homebridge Samsung TV 2016",
+  "description": "Homebridge Samsung smartTV >= 2016",
   "author": "kyleaa",
   "dependencies": {
     "ws" : "1.1",
@@ -13,10 +13,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/kyleaa/homebridge-samsungtv2016.git"
+    "url": "git://github.com/dragouf/homebridge-samsungtv2016.git"
   },
   "bugs": {
-    "url": "http://github.com/kyleaa/homebridge-samsungtv2016/issues"
+    "url": "http://github.com/dragouf/homebridge-samsungtv2016/issues"
   },
   "engines": {
     "node": ">=0.12.0",

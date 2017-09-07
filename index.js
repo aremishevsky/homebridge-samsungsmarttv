@@ -8,7 +8,7 @@ module.exports = function(homebridge) {
     Service = homebridge.hap.Service;
     Characteristic = homebridge.hap.Characteristic;
 
-    homebridge.registerAccessory("homebridge-samsungtv", "SamsungTV2016", SamsungTv2016Accessory);
+    homebridge.registerAccessory("homebridge-samsungtv", "SamsungSmartTv", SamsungTv2016Accessory);
 };
 
 //
@@ -24,11 +24,14 @@ function SamsungTv2016Accessory(log, config) {
     this.ip_address = config["ip_address"];
     this.api_timeout = config["api_timeout"] || 2000;
 
-    if (!this.ip_address) throw new Error("You must provide a config value for 'ip_address'.");
-    if (!this.mac_address) throw new Error("You must provide a config value for 'mac_address'.");
+    if (!this.ip_address)
+      throw new Error("You must provide a config value for 'ip_address'.");
+    if (!this.mac_address)
+      throw new Error("You must provide a config value for 'mac_address'.");
     this.app_name_base64 = (new Buffer(config["app_name"] || "homebridge")).toString('base64');
 
     this.is_powering_off = false;
+    this.is_mute = false;
 
     this.wake = function(done) {
       wol.wake(this.mac_address, function(error) {
@@ -46,12 +49,25 @@ function SamsungTv2016Accessory(log, config) {
         done(e);
       });
       ws.on('message', function(data, flags) {
-        var cmd =  {"method":"ms.remote.control","params":{"Cmd":"Click","DataOfCmd":key,"Option":"false","TypeOfRemote":"SendRemoteKey"}};
+        var cmd =  {
+          "method":"ms.remote.control",
+          "params": {
+            "Cmd":"Click",
+            "DataOfCmd":key,
+            "Option":"false",
+            "TypeOfRemote":"SendRemoteKey"
+          }
+        };
         data = JSON.parse(data);
+
         if(data.event == "ms.channel.connect") {
           accessory.log('websocket connect');
           ws.send(JSON.stringify(cmd));
-          setTimeout(function() {ws.close(); accessory.log('websocket closed');}, 1000);
+          setTimeout(function() {
+            ws.close();
+            accessory.log('websocket closed');
+          }, 1000);
+
           done(0);
         }
       });
@@ -60,14 +76,17 @@ function SamsungTv2016Accessory(log, config) {
     this.service = new Service.Switch(this.name);
 
     this.is_api_active = function(done) {
-      request.get({ url: 'http://' + this.ip_address + ':8001/api/v2/', timeout: this.api_timeout}, function(err, res, body) {
-        if(!err && res.statusCode === 200) {
-          accessory.log('TV API is active');
-          done(true);
-        } else {
-          accessory.log('No response from TV');
-          done(false);
-        }
+      request.get({
+        url: 'http://' + this.ip_address + ':8001/api/v2/',
+        timeout: this.api_timeout},
+        function(err, res, body) {
+          if(!err && res.statusCode === 200) {
+            accessory.log('TV API is active');
+            done(true);
+          } else {
+            accessory.log('No response from TV');
+            done(false);
+          }
       });
     };
 
@@ -75,6 +94,10 @@ function SamsungTv2016Accessory(log, config) {
         .getCharacteristic(Characteristic.On)
         .on('get', this._getOn.bind(this))
         .on('set', this._setOn.bind(this));
+    this.service
+        .getCharacteristic(Characteristic.Mute)
+        .on('get', this._getMute.bind(this))
+        .on('set', this._setMute.bind(this));
 }
 
 SamsungTv2016Accessory.prototype.getInformationService = function() {
@@ -91,7 +114,45 @@ SamsungTv2016Accessory.prototype.getServices = function() {
     return [this.service, this.getInformationService()];
 };
 
+SamsungTv2016Accessory.prototype._getMute = function(callback) {
+  var accessory = this;
+  accessory.log('TV mute state is: ' + accessory.is_mute);
+  callback(null, accessory.is_mute);
+};
 
+SamsungTv2016Accessory.prototype._setMute = function(mute, callback) {
+  if (mute) {
+    accessory.is_api_active(function(alive) {
+      if(alive) {
+        accessory.log('sending mute key');
+        accessory.sendKey('KEY_MUTE', function(err) {
+            if (err) {
+                callback(new Error(err));
+            } else {
+                // command has been successfully transmitted to your tv
+                accessory.log('successfully unmute tv');
+                accessory.is_mute = false;
+                callback(null);
+            }
+        });
+      } else {
+        accessory.is_api_active(function(alive) {
+          if(alive) {
+            accessory.log('sending mute key');
+            accessory.sendKey('KEY_MUTE', function(err) {
+                if (err) {
+                    callback(new Error(err));
+                } else {
+                    // command has been successfully transmitted to your tv
+                    accessory.log('successfully mute tv');
+                    accessory.is_mute = true;
+                    callback(null);
+                }
+            });
+         }
+     });
+  }
+};
 
 SamsungTv2016Accessory.prototype._getOn = function(callback) {
     var accessory = this;
