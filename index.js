@@ -8,14 +8,14 @@ module.exports = function(homebridge) {
     Service = homebridge.hap.Service;
     Characteristic = homebridge.hap.Characteristic;
 
-    homebridge.registerAccessory("homebridge-samsungsmarttv", "SamsungSmartTv", SamsungTv2016Accessory);
+    homebridge.registerAccessory("homebridge-samsungsmarttv", "SamsungSmartTv", SamsungSmartTvAccessory);
 };
 
 //
 // SamsungTV2016 Accessory
 //
 
-function SamsungTv2016Accessory(log, config) {
+function SamsungSmartTvAccessory(log, config) {
     var accessory = this;
     this.log = log;
     this.config = config;
@@ -100,7 +100,7 @@ function SamsungTv2016Accessory(log, config) {
         .on('set', this._setMute.bind(this));
 }
 
-SamsungTv2016Accessory.prototype.getInformationService = function() {
+SamsungSmartTvAccessory.prototype.getInformationService = function() {
     var informationService = new Service.AccessoryInformation();
     informationService
         .setCharacteristic(Characteristic.Name, this.name)
@@ -110,17 +110,17 @@ SamsungTv2016Accessory.prototype.getInformationService = function() {
     return informationService;
 };
 
-SamsungTv2016Accessory.prototype.getServices = function() {
+SamsungSmartTvAccessory.prototype.getServices = function() {
     return [this.service, this.getInformationService()];
 };
 
-SamsungTv2016Accessory.prototype._getMute = function(callback) {
+SamsungSmartTvAccessory.prototype._getMute = function(callback) {
   var accessory = this;
   accessory.log('TV mute state is: ' + accessory.is_mute);
   callback(null, accessory.is_mute);
 };
 
-SamsungTv2016Accessory.prototype._setMute = function(mute, callback) {
+SamsungSmartTvAccessory.prototype._setMute = function(mute, callback) {
   if (mute) {
     accessory.is_api_active(function(alive) {
       if(alive) {
@@ -154,7 +154,7 @@ SamsungTv2016Accessory.prototype._setMute = function(mute, callback) {
   }
 };
 
-SamsungTv2016Accessory.prototype._getOn = function(callback) {
+SamsungSmartTvAccessory.prototype._getOn = function(callback) {
     var accessory = this;
 
     if(accessory.is_powering_off) {
@@ -170,7 +170,7 @@ SamsungTv2016Accessory.prototype._getOn = function(callback) {
     }
 };
 
-SamsungTv2016Accessory.prototype._setOn = function(on, callback) {
+SamsungSmartTvAccessory.prototype._setOn = function(on, callback) {
     var accessory = this;
     accessory.log('received on command: ' + on);
 
