@@ -8,7 +8,7 @@ module.exports = function(homebridge) {
     Service = homebridge.hap.Service;
     Characteristic = homebridge.hap.Characteristic;
 
-    homebridge.registerAccessory("homebridge-samsungtv", "SamsungSmartTv", SamsungTv2016Accessory);
+    homebridge.registerAccessory("homebridge-samsungsmarttv", "SamsungSmartTv", SamsungTv2016Accessory);
 };
 
 //
