@@ -95,9 +95,13 @@ function SamsungSmartTvAccessory(log, config) {
         .on('get', this._getOn.bind(this))
         .on('set', this._setOn.bind(this));
     this.service
-        .getCharacteristic(Characteristic.Mute)
+        .addCharacteristic(Characteristic.Mute)
         .on('get', this._getMute.bind(this))
         .on('set', this._setMute.bind(this));
+    /*this.service
+        .addCharacteristic(Characteristic.Volume)
+        .on('get', this._getVolume.bind(this))
+        .on('set', this._setVolume.bind(this));*/
 }
 
 SamsungSmartTvAccessory.prototype.getInformationService = function() {
