@@ -1,6 +1,6 @@
 {
   "name": "homebridge-samsungsmarttv",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "Homebridge Samsung smartTV >= 2016",
   "author": "kyleaa",
   "dependencies": {
