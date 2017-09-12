@@ -10,7 +10,7 @@
 
 	"accessories": [
 		{
-			"accessory": "SamsungTV2016",
+			"accessory": "SamsungSmartTv",
 			"name": "Bedroom TV",
 			"ip_address": "192.168.1.23",
 			"mac_address": "0A:1B:2C:3D:4E:5F"

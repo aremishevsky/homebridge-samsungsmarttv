@@ -7,13 +7,8 @@ var request = require('request');
 module.exports = function(homebridge) {
     Service = homebridge.hap.Service;
     Characteristic = homebridge.hap.Characteristic;
-
     homebridge.registerAccessory("homebridge-samsungsmarttv", "SamsungSmartTv", SamsungSmartTvAccessory);
 };
-
-//
-// SamsungTV2016 Accessory
-//
 
 function SamsungSmartTvAccessory(log, config) {
     var accessory = this;
@@ -28,8 +23,9 @@ function SamsungSmartTvAccessory(log, config) {
       throw new Error("You must provide a config value for 'ip_address'.");
     if (!this.mac_address)
       throw new Error("You must provide a config value for 'mac_address'.");
-    this.app_name_base64 = (new Buffer(config["app_name"] || "homebridge")).toString('base64');
 
+    this.app_name_base64 = (new Buffer(config["app_name"] || "homebridge")).toString('base64');
+    this.service = new Service.Switch(this.name);
     this.is_powering_off = false;
     this.is_mute = false;
 
@@ -73,8 +69,6 @@ function SamsungSmartTvAccessory(log, config) {
       });
     };
 
-    this.service = new Service.Switch(this.name);
-
     this.is_api_active = function(done) {
       request.get({
         url: 'http://' + this.ip_address + ':8001/api/v2/',
@@ -94,6 +88,7 @@ function SamsungSmartTvAccessory(log, config) {
         .getCharacteristic(Characteristic.On)
         .on('get', this._getOn.bind(this))
         .on('set', this._setOn.bind(this));
+    this.service.addOptionalCharacteristic(Characteristic.Mute);
     this.service
         .addCharacteristic(Characteristic.Mute)
         .on('get', this._getMute.bind(this))
@@ -118,6 +113,9 @@ SamsungSmartTvAccessory.prototype.getServices = function() {
     return [this.service, this.getInformationService()];
 };
 
+/*********************************
+* MUTE
+**********************************/
 SamsungSmartTvAccessory.prototype._getMute = function(callback) {
   var accessory = this;
   accessory.log('TV mute state is: ' + accessory.is_mute);
@@ -160,6 +158,10 @@ SamsungSmartTvAccessory.prototype._setMute = function(mute, callback) {
  }
 };
 
+
+/*********************************
+* POWER
+**********************************/
 SamsungSmartTvAccessory.prototype._getOn = function(callback) {
     var accessory = this;
 
