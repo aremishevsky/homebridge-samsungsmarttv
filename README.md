@@ -11,3 +11,5 @@ This allows you to control your Samsung Smart TV with HomeKit and Siri.
 
 ## Important Notes
 The TV API does not work when the TV is powered down, so on the plugin will send wake-on-lan command over ethernet to switch it on.
+
+This plugin has 2 types, the first one is for TV power and the second one is for tv sound. See config.sample for more details
