@@ -92,7 +92,7 @@ function SamsungSmartTvAccessory(log, config) {
         .on('set', this._setOn.bind(this));
     } else {
     this.service
-        .addCharacteristic(Characteristic.On)
+        .getCharacteristic(Characteristic.On)
         .on('get', this._getMute.bind(this))
         .on('set', this._setMute.bind(this));
     }
