@@ -17,6 +17,7 @@ function SamsungSmartTvAccessory(log, config) {
     this.name = config["name"];
     this.mac_address = config["mac_address"];
     this.ip_address = config["ip_address"];
+    this.type = config["type"]; // power or mute
     this.api_timeout = config["api_timeout"] || 2000;
 
     if (!this.ip_address)
@@ -84,15 +85,17 @@ function SamsungSmartTvAccessory(log, config) {
       });
     };
 
+    if(this.type === 'power') {
     this.service
         .getCharacteristic(Characteristic.On)
         .on('get', this._getOn.bind(this))
         .on('set', this._setOn.bind(this));
-    this.service.addOptionalCharacteristic(Characteristic.Mute);
+    } else {
     this.service
-        .addCharacteristic(Characteristic.Mute)
+        .addCharacteristic(Characteristic.On)
         .on('get', this._getMute.bind(this))
         .on('set', this._setMute.bind(this));
+    }
     /*this.service
         .addCharacteristic(Characteristic.Volume)
         .on('get', this._getVolume.bind(this))

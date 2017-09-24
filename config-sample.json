@@ -6,12 +6,20 @@
 		"pin": "031-45-154"
 	},
 
-	"description": "This is an example configuration for the Samsung TV homebridge plugin",
+	"description": "You can create 2 accessories of 2 different type, one is to controle the power state of the tv the second mute",
 
 	"accessories": [
 		{
 			"accessory": "SamsungSmartTv",
 			"name": "Bedroom TV",
+			"type": "power",
+			"ip_address": "192.168.1.23",
+			"mac_address": "0A:1B:2C:3D:4E:5F"
+		},
+		{
+			"accessory": "SamsungSmartTv",
+			"name": "Bedroom TV sound",
+			"type": "mute",
 			"ip_address": "192.168.1.23",
 			"mac_address": "0A:1B:2C:3D:4E:5F"
 		}
