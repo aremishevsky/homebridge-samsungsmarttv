@@ -26,80 +26,30 @@ function SamsungSmartTvAccessory(log, config) {
       throw new Error("You must provide a config value for 'mac_address'.");
 
     this.app_name_base64 = (new Buffer(config["app_name"] || "homebridge")).toString('base64');
-    this.service = new Service.Switch(this.name);
+
     this.is_powering_off = false;
-    this.is_mute = false;
-
-    this.wake = function(done) {
-      wol.wake(this.mac_address, function(error) {
-        if (error) { done(1); }
-        else { done(0); }
-      });
-    };
-
-    this.sendKey = function(key, done) {
-      var ws = new WebSocket('http://' + this.ip_address + ':8001/api/v2/channels/samsung.remote.control?name=' + this.app_name_base64, function(error) {
-        done(new Error(error));
-      });
-      ws.on('error', function (e) {
-        accessory.log('Error in sendKey WebSocket communication');
-        done(e);
-      });
-      ws.on('message', function(data, flags) {
-        var cmd =  {
-          "method":"ms.remote.control",
-          "params": {
-            "Cmd":"Click",
-            "DataOfCmd":key,
-            "Option":"false",
-            "TypeOfRemote":"SendRemoteKey"
-          }
-        };
-        data = JSON.parse(data);
-
-        if(data.event == "ms.channel.connect") {
-          accessory.log('websocket connect');
-          ws.send(JSON.stringify(cmd));
-          setTimeout(function() {
-            ws.close();
-            accessory.log('websocket closed');
-          }, 1000);
-
-          done(0);
-        }
-      });
-    };
-
-    this.is_api_active = function(done) {
-      request.get({
-        url: 'http://' + this.ip_address + ':8001/api/v2/',
-        timeout: this.api_timeout},
-        function(err, res, body) {
-          if(!err && res.statusCode === 200) {
-            accessory.log('TV API is active');
-            done(true);
-          } else {
-            accessory.log('No response from TV');
-            done(false);
-          }
-      });
-    };
+    this.is_mute = true;
 
     if(this.type === 'power') {
-    this.service
-        .getCharacteristic(Characteristic.On)
-        .on('get', this._getOn.bind(this))
-        .on('set', this._setOn.bind(this));
+      this.service = new Service.Switch(this.name);
+      this.service
+          .getCharacteristic(Characteristic.On)
+          .on('get', this._getOn.bind(this))
+          .on('set', this._setOn.bind(this));
     } else {
-    this.service
-        .getCharacteristic(Characteristic.On)
-        .on('get', this._getMute.bind(this))
-        .on('set', this._setMute.bind(this));
+      // todo : Lightbulb for volume
+      this.service = new Service.Switch(this.name);
+
+      this.service
+        .getCharacteristic(Characteristic.Brightness)
+        .on('get', this.getVolume.bind(this))
+        .on('set', this.setVolume.bind(this));
+
+      this.service
+          .getCharacteristic(Characteristic.On)
+          .on('get', this._getMute.bind(this))
+          .on('set', this._setMute.bind(this));
     }
-    /*this.service
-        .addCharacteristic(Characteristic.Volume)
-        .on('get', this._getVolume.bind(this))
-        .on('set', this._setVolume.bind(this));*/
 }
 
 SamsungSmartTvAccessory.prototype.getInformationService = function() {
@@ -126,8 +76,7 @@ SamsungSmartTvAccessory.prototype._getMute = function(callback) {
 };
 
 SamsungSmartTvAccessory.prototype._setMute = function(mute, callback) {
-  var accessory = this;
-  if (mute) {
+    var accessory = this;
     accessory.is_api_active(function(alive) {
       if(alive) {
         accessory.log('sending mute key');
@@ -136,32 +85,18 @@ SamsungSmartTvAccessory.prototype._setMute = function(mute, callback) {
                 callback(new Error(err));
             } else {
                 // command has been successfully transmitted to your tv
-                accessory.log('successfully unmute tv');
-                accessory.is_mute = false;
+                accessory.log('successfully change tv mute state to : ' + mute);
+                accessory.is_mute = !mute;
                 callback(null);
             }
         });
-      } else {
-        accessory.is_api_active(function(alive) {
-          if(alive) {
-            accessory.log('sending mute key');
-            accessory.sendKey('KEY_MUTE', function(err) {
-                if (err) {
-                    callback(new Error(err));
-                } else {
-                    // command has been successfully transmitted to your tv
-                    accessory.log('successfully mute tv');
-                    accessory.is_mute = true;
-                    callback(null);
-                }
-            });
-          }
-      });
-    }
+      }
   });
- }
 };
 
+/*********************************
+* VOLUME
+**********************************/
 
 /*********************************
 * POWER
@@ -227,4 +162,63 @@ SamsungSmartTvAccessory.prototype._setOn = function(on, callback) {
             }
         });
     }
+};
+
+/*********************************
+* HELPERS
+**********************************/
+SamsungSmartTvAccessory.prototype.wake = function(done) {
+  wol.wake(this.mac_address, function(error) {
+    if (error) { done(1); }
+    else { done(0); }
+  });
+};
+SamsungSmartTvAccessory.prototype.is_api_active = function(done) {
+  var accessory = this;
+  request.get({
+    url: 'http://' + this.ip_address + ':8001/api/v2/',
+    timeout: this.api_timeout},
+    function(err, res, body) {
+      if(!err && res.statusCode === 200) {
+        accessory.log('TV API is active');
+        done(true);
+      } else {
+        accessory.log('No response from TV');
+        done(false);
+      }
+  });
+};
+
+SamsungSmartTvAccessory.prototype.sendKey = function(key, done) {
+  var accessory = this;
+  var ws = new WebSocket('http://' + this.ip_address + ':8001/api/v2/channels/samsung.remote.control?name=' + this.app_name_base64, function(error) {
+    done(new Error(error));
+  });
+  ws.on('error', function (e) {
+    accessory.log('Error in sendKey WebSocket communication');
+    done(e);
+  });
+  ws.on('message', function(data, flags) {
+    var cmd =  {
+      "method":"ms.remote.control",
+      "params": {
+        "Cmd":"Click",
+        "DataOfCmd":key,
+        "Option":"false",
+        "TypeOfRemote":"SendRemoteKey"
+      }
+    };
+    data = JSON.parse(data);
+
+    if(data.event == "ms.channel.connect") {
+      accessory.log('websocket connect');
+      ws.send(JSON.stringify(cmd));
+      setTimeout(function() {
+        ws.close();
+        accessory.log('websocket closed');
+      }, 1000);
+
+      done(0);
+    }
+  });
 };
